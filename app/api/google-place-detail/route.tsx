@@ -22,13 +22,18 @@ export async function POST(req:NextRequest) {
         textQuery:placeName
     }, config);
 
-    const placeRefName= result?.data?.places[0]?.photos[0]?.name
+    const placeRefName = result?.data?.places?.[0]?.photos?.[0]?.name;
+    
+    if (!placeRefName) {
+        return NextResponse.json(null);
+    }
 
-    const photoRefUrl= `https://places.googleapis.com/v1/${placeRefName}/media?maxHeightPx=1000&maxWidthPx=1000&key=${process.env.GOOGLE_PLACE_API_KEY}`
+    const photoRefUrl = `https://places.googleapis.com/v1/${placeRefName}/media?maxHeightPx=1000&maxWidthPx=1000&key=${process.env.GOOGLE_PLACE_API_KEY}`;
 
-    return NextResponse.json(photoRefUrl) 
+    return NextResponse.json(photoRefUrl);
 }catch(e){
-    return NextResponse.json({error:e})
+    console.error('Error fetching place details:', e);
+    return NextResponse.json(null);
 }
 
 }

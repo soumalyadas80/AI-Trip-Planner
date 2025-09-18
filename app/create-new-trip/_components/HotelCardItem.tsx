@@ -13,33 +13,46 @@ type Props = {
 
 function HotelCardItem({ hotel }: Props) {
 
-  const [photoUrl, setPhotoUrl] = useState<string>()
+  const [photoUrl, setPhotoUrl] = useState<string>("/placeholder.jpg");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const GetGooglePlaceDetail = async()=>{
-    const result = await axios.post('/api/google-place-detail',{
-      placeName:hotel?.hotel_name
-    })
-    if(result?.data?.e){
-      return;
+  const GetGooglePlaceDetail = async () => {
+    if (!hotel?.hotel_name) return;
+
+    try {
+      setIsLoading(true);
+      const result = await axios.post('/api/google-place-detail', {
+        placeName: hotel.hotel_name
+      });
+      
+      // If we got a valid URL, use it; otherwise keep the placeholder
+      if (result.data && typeof result.data === 'string' && result.data.startsWith('http')) {
+        setPhotoUrl(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch hotel image:', error);
+    } finally {
+      setIsLoading(false);
     }
-    setPhotoUrl(result?.data)
+  };
 
-  }
-
-  useEffect(()=>{
-    hotel && GetGooglePlaceDetail()
-  },[hotel])
+  useEffect(() => {
+    GetGooglePlaceDetail();
+  }, [hotel?.hotel_name]);
 
   return (
     <div className="flex flex-col rounded-2xl shadow-md hover:shadow-primary transition overflow-hidden bg-white h-full">
       {/* Image */}
-      <Image
-        src={photoUrl ? photoUrl : "/placeholder.jpg"}
-        width={400}
-        height={200}
-        alt={hotel?.hotel_name || "Hotel Image"}
-        className="object-cover h-48 w-full"
-      />
+      <div className="relative w-full h-48">
+        <Image
+          src={photoUrl}
+          alt={hotel?.hotel_name || "Hotel Image"}
+          className="object-cover"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        />
+      </div>
 
       {/* Content */}
       <div className="p-4 flex flex-col gap-2 flex-1">
